@@ -24,6 +24,38 @@
       </span>
     </p>
 
+    <section class="panel">
+      <h3>培训考核回传后续宣讲事项（{{ followUps.length }}）</h3>
+      <p class="hint">培训考核回传包合并后自动生成，来源包号和培训编号可追溯；事项本身按宣传活动正常流转。</p>
+      <table v-if="followUps.length" class="data-table">
+        <thead>
+          <tr>
+            <th>活动编号</th>
+            <th>宣传主题</th>
+            <th>宣传方式</th>
+            <th>覆盖村组</th>
+            <th>计划日期</th>
+            <th>来源培训</th>
+            <th>来源包号</th>
+            <th>当前状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in followUps" :key="String(row.id)">
+            <td>{{ row['活动编号'] }}</td>
+            <td>{{ row['宣传主题'] }}</td>
+            <td>{{ row['宣传方式'] }}</td>
+            <td>{{ row['覆盖村组'] }}</td>
+            <td>{{ row['活动日期'] || '—' }}</td>
+            <td>{{ row['来源培训编号'] }}</td>
+            <td>{{ row['来源包号'] }}</td>
+            <td>{{ row.status }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="empty-state">暂无回传生成的后续宣讲事项，合并培训考核回传包后会出现在这里</p>
+    </section>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -97,6 +129,11 @@ const statusSummary = computed(() =>
     status,
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
+)
+
+// 培训考核回传包合并后生成的后续宣讲事项，独立成组展示以便逐场落实。
+const followUps = computed(() =>
+  rows.value.filter((row) => String(row['事项来源'] ?? '') === '培训考核回传'),
 )
 
 function resetFilters() {

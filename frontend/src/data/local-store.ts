@@ -3,6 +3,7 @@ import type { EntryRow } from './types'
 
 // 本地持久化：数据放在 localStorage 里，刷新、关掉再打开都还在。
 const STORAGE_KEY = 'geohazard-monitor-prevention:entries'
+const JSON_PREFIX = 'geohazard-monitor-prevention:'
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -56,4 +57,27 @@ export function resetRows(key: string): EntryRow[] {
 
 export function storageKey(): string {
   return STORAGE_KEY
+}
+
+// 业务模块之外的杂项（如考核回传包导入台账）也落在 localStorage，各自占一个键。
+export function readJson<T>(name: string, fallback: T): T {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return fallback
+  }
+  const raw = window.localStorage.getItem(JSON_PREFIX + name)
+  if (!raw) {
+    return fallback
+  }
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+export function writeJson<T>(name: string, value: T): void {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return
+  }
+  window.localStorage.setItem(JSON_PREFIX + name, JSON.stringify(value))
 }
