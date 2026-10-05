@@ -1,8 +1,9 @@
 import { SEED_ROWS } from './seed'
-import type { EntryRow } from './types'
+import type { EntryRow, FeedbackPackageInfo } from './types'
 
 // 本地持久化：数据放在 localStorage 里，刷新、关掉再打开都还在。
 const STORAGE_KEY = 'geohazard-monitor-prevention:entries'
+const FEEDBACK_PACKAGES_KEY = 'geohazard-monitor-prevention:training-feedback-packages'
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
@@ -56,4 +57,31 @@ export function resetRows(key: string): EntryRow[] {
 
 export function storageKey(): string {
   return STORAGE_KEY
+}
+
+/** 已合并回传包登记表：用于同一包重复导入去重。 */
+export function readFeedbackPackages(): FeedbackPackageInfo[] {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return []
+  }
+  const raw = window.localStorage.getItem(FEEDBACK_PACKAGES_KEY)
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as FeedbackPackageInfo[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function writeFeedbackPackages(packages: FeedbackPackageInfo[]): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem(FEEDBACK_PACKAGES_KEY, JSON.stringify(packages))
+  }
+}
+
+export function feedbackStorageKey(): string {
+  return FEEDBACK_PACKAGES_KEY
 }

@@ -18,6 +18,10 @@
       </article>
     </div>
 
+    <p v-if="followUps.length" class="followup-banner">
+      培训考核回传已生成 {{ followUps.length }} 项后续宣讲事项（「来源培训」列带「培训跟进」标记），请按计划组织宣讲。
+    </p>
+
     <p class="status-legend">
       <span v-for="item in statusSummary" :key="item.status" class="legend-item">
         {{ item.status }}：{{ item.count }}
@@ -42,8 +46,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+        <tr v-for="row in rows" :key="String(row.id)" :title="row.事项说明 ? String(row.事项说明) : ''">
+          <td v-for="column in columns" :key="column">
+            <template v-if="column === '来源培训'">
+              {{ row.来源培训编号 || '—' }}<span v-if="row.来源培训编号" class="followup-tag">培训跟进</span>
+            </template>
+            <template v-else>{{ row[column] ?? '—' }}</template>
+          </td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
             <button
@@ -82,10 +91,15 @@ import {
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('propaganda')
-const columns = ["活动编号", "宣传主题", "宣传方式", "覆盖村组", "活动日期", "参与人数", "组织人", "活动状态"]
+const columns = ["活动编号", "宣传主题", "宣传方式", "覆盖村组", "活动日期", "参与人数", "组织人", "来源培训", "活动状态"]
 const actions = ["开展活动", "确认完成", "取消活动"]
 const statuses = ["待开展", "进行中", "已完成", "已取消"]
-const stats = [{"label": "本月活动数", "value": 0}, {"label": "已完成数", "value": 0}, {"label": "覆盖人次", "value": 0}]
+const stats = computed(() => [
+  { label: '本月活动数', value: rows.value.length },
+  { label: '已完成数', value: rows.value.filter((row) => String(row.status) === '已完成').length },
+  { label: '覆盖人次', value: rows.value.reduce((sum, row) => sum + (Number(row.参与人数) || 0), 0) },
+  { label: '培训回传后续宣讲待办', value: followUps.value.filter((row) => String(row.status) === '待开展').length },
+])
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
@@ -98,6 +112,7 @@ const statusSummary = computed(() =>
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
 )
+const followUps = computed(() => rows.value.filter((row) => Boolean(row.来源培训编号)))
 
 function resetFilters() {
   filters.value = {}
@@ -135,3 +150,24 @@ function reload() {
 
 onMounted(reload)
 </script>
+
+<style scoped>
+.followup-banner {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fffaeb;
+  border: 1px solid #fedf89;
+  color: #b54708;
+  font-size: 13px;
+}
+.followup-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fef0c7;
+  color: #b54708;
+  font-size: 11px;
+}
+</style>
